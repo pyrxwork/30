@@ -1,31 +1,51 @@
-# This workflow deploys the application to Firebase Hosting whenever code is pushed to the 'main' branch.
 name: Deploy to Firebase Hosting
 
 on:
   push:
     branches:
-      - main
+      - main  # deploys whenever you push to main branch
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout the repository code
+      # Step 1: Checkout your repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js environment (required for the hosting deploy action)
+      # Step 2: Use correct Node.js version (Firebase requires >= 20)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      # Step 3: Deploy to Firebase Hosting using the Service Account Secret
-      - name: Deploy to Firebase
+      # Step 3: Install dependencies (if you have a package.json)
+      # If your site is just static HTML/CSS, you can safely delete this block
+      - name: Install dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm install
+          else
+            echo "No package.json found, skipping npm install"
+          fi
+
+      # Step 4: Build your project (optional)
+      # If you use React, Vue, etc., keep this; otherwise delete this step.
+      - name: Build project
+        run: |
+          if [ -f package.json ]; then
+            npm run build || echo "No build script found"
+          else
+            echo "No build step required"
+          fi
+
+      # Step 5: Deploy to Firebase Hosting
+      - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' 
-          # PROJECT ID CONFIRMED FROM YOUR JSON KEY
-          projectId: lost-kingz-30-day-challenge 
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           channelId: live
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
